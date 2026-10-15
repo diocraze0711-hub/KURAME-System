@@ -1,0 +1,30 @@
+<?php
+require_once __DIR__ . '/../config.php';
+header('Content-Type: application/json');
+
+$payload = json_decode(file_get_contents('php://input'), true);
+if (!$payload) {
+    echo json_encode(['success' => false, 'error' => 'No payload']);
+    exit;
+}
+
+$targetType = $payload['target_type'] ?? null;
+$targetId = (int)($payload['target_id'] ?? 0);
+$note = trim($payload['note'] ?? '');
+
+if (!$targetType || $targetId <= 0 || $note === '') {
+    echo json_encode(['success' => false, 'error' => 'Invalid params']);
+    exit;
+}
+
+if (!isset($_SESSION['user_id'])) {
+    echo json_encode(['success' => false, 'error' => 'Authentication required']);
+    exit;
+}
+
+try {
+    $id = addUserNote($pdo, $_SESSION['user_id'], $targetType, $targetId, $note);
+    echo json_encode(['success' => true, 'id' => $id]);
+} catch (Exception $e) {
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+}
